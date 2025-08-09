@@ -16,6 +16,8 @@ def convert(md_lines):
         m_h = h_pat.match(line)
         m_ul = ul_pat.match(line)
         m_ol = ol_pat.match(line)
+        print(f"DBG {repr(line)} -> H={bool(m_h)} UL={bool(m_ul)} OL={bool(m_ol)}", file=sys.stderr)
+
         if m_h:
             if in_p:
                 out.append("</p>")
@@ -91,15 +93,22 @@ def main():
     if len(sys.argv) < 3:
         print("Usage: ./markdown2html.py README.md README.html", file=sys.stderr)
         sys.exit(1)
+
     in_path, out_path = sys.argv[1], sys.argv[2]
+    print("IN_PATH:", os.path.abspath(in_path), file=sys.stderr)
+
     if not os.path.isfile(in_path):
         print(f"Missing {in_path}", file=sys.stderr)
         sys.exit(1)
+
     with open(in_path, "r", encoding="utf-8") as f:
         md_lines = f.readlines()
+
     html = convert(md_lines)
+
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(html)
+
     sys.exit(0)
 
 if __name__ == "__main__":
