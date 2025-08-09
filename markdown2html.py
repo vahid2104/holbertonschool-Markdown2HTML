@@ -6,34 +6,62 @@ import re
 def convert(md_lines):
     out = []
     in_ul = False
+    in_ol = False
     h_pat = re.compile(r'^(#{1,6})\s+(.*)$')
     ul_pat = re.compile(r'^-\s+(.*)$')
+    ol_pat = re.compile(r'^\*\s+(.*)$')
     for line in md_lines:
-        line = line.rstrip('\n')
+        line = line.rstrip('\n').lstrip('\ufeff')
         m_h = h_pat.match(line)
         m_ul = ul_pat.match(line)
+        m_ol = ol_pat.match(line)
         if m_h:
             if in_ul:
                 out.append("</ul>")
                 in_ul = False
+            if in_ol:
+                out.append("</ol>")
+                in_ol = False
             level = len(m_h.group(1))
             text = m_h.group(2).strip()
             out.append(f"<h{level}>{text}</h{level}>")
         elif m_ul:
+            if in_ol:
+                out.append("</ol>")
+                in_ol = False
             if not in_ul:
                 out.append("<ul>")
                 in_ul = True
             text = m_ul.group(1).strip()
             out.append(f"<li>{text}</li>")
+        elif m_ol:
+            if in_ul:
+                out.append("</ul>")
+                in_ul = False
+            if not in_ol:
+                out.append("<ol>")
+                in_ol = True
+            text = m_ol.group(1).strip()
+            out.append(f"<li>{text}</li>")
         else:
-            if in_ul and line.strip() == "":
-                out.append("</ul>")
-                in_ul = False
-            elif in_ul and line.strip() != "":
-                out.append("</ul>")
-                in_ul = False
+            if line.strip() == "":
+                if in_ul:
+                    out.append("</ul>")
+                    in_ul = False
+                if in_ol:
+                    out.append("</ol>")
+                    in_ol = False
+            else:
+                if in_ul:
+                    out.append("</ul>")
+                    in_ul = False
+                if in_ol:
+                    out.append("</ol>")
+                    in_ol = False
     if in_ul:
         out.append("</ul>")
+    if in_ol:
+        out.append("</ol>")
     return "\n".join(out) + ("\n" if out else "")
 
 def main():
