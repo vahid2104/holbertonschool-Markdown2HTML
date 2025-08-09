@@ -7,6 +7,7 @@ def convert(md_lines):
     out = []
     in_ul = False
     in_ol = False
+    in_p = False
     h_pat = re.compile(r'^(#{1,6})\s+(.*)$')
     ul_pat = re.compile(r'^-\s+(.*)$')
     ol_pat = re.compile(r'^\*\s+(.*)$')
@@ -16,6 +17,9 @@ def convert(md_lines):
         m_ul = ul_pat.match(line)
         m_ol = ol_pat.match(line)
         if m_h:
+            if in_p:
+                out.append("</p>")
+                in_p = False
             if in_ul:
                 out.append("</ul>")
                 in_ul = False
@@ -26,6 +30,9 @@ def convert(md_lines):
             text = m_h.group(2).strip()
             out.append(f"<h{level}>{text}</h{level}>")
         elif m_ul:
+            if in_p:
+                out.append("</p>")
+                in_p = False
             if in_ol:
                 out.append("</ol>")
                 in_ol = False
@@ -35,6 +42,9 @@ def convert(md_lines):
             text = m_ul.group(1).strip()
             out.append(f"<li>{text}</li>")
         elif m_ol:
+            if in_p:
+                out.append("</p>")
+                in_p = False
             if in_ul:
                 out.append("</ul>")
                 in_ul = False
@@ -45,6 +55,9 @@ def convert(md_lines):
             out.append(f"<li>{text}</li>")
         else:
             if line.strip() == "":
+                if in_p:
+                    out.append("</p>")
+                    in_p = False
                 if in_ul:
                     out.append("</ul>")
                     in_ul = False
@@ -52,12 +65,22 @@ def convert(md_lines):
                     out.append("</ol>")
                     in_ol = False
             else:
-                if in_ul:
-                    out.append("</ul>")
-                    in_ul = False
-                if in_ol:
-                    out.append("</ol>")
-                    in_ol = False
+                text = line.strip()
+                if not in_p:
+                    if in_ul:
+                        out.append("</ul>")
+                        in_ul = False
+                    if in_ol:
+                        out.append("</ol>")
+                        in_ol = False
+                    out.append("<p>")
+                    out.append(text)
+                    in_p = True
+                else:
+                    out.append("<br/>")
+                    out.append(text)
+    if in_p:
+        out.append("</p>")
     if in_ul:
         out.append("</ul>")
     if in_ol:
